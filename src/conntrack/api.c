@@ -835,6 +835,8 @@ __build_query_ct(struct nfnl_subsys_handle *ssh,
 		break;
 	case NFCT_Q_FLUSH_FILTER:
 		nfct_fill_hdr(req, IPCTNL_MSG_CT_DELETE, NLM_F_ACK, *family, 1);
+		if (__build_filter_flush(req, size, data) < 0)
+			return -1;
 		break;
 	case NFCT_Q_DUMP:
 		nfct_fill_hdr(req, IPCTNL_MSG_CT_GET, NLM_F_DUMP, *family,
@@ -850,12 +852,14 @@ __build_query_ct(struct nfnl_subsys_handle *ssh,
 	case NFCT_Q_DUMP_FILTER:
 		nfct_fill_hdr(req, IPCTNL_MSG_CT_GET, NLM_F_DUMP, AF_UNSPEC,
 			      NFNETLINK_V0);
-		assert(__build_filter_dump(req, size, data) == 0);
+		if (__build_filter_dump(req, size, data) < 0)
+			return -1;
 		break;
 	case NFCT_Q_DUMP_FILTER_RESET:
 		nfct_fill_hdr(req, IPCTNL_MSG_CT_GET_CTRZERO, NLM_F_DUMP,
 			      AF_UNSPEC, NFNETLINK_V0);
-		__build_filter_dump(req, size, data);
+		if (__build_filter_dump(req, size, data) < 0)
+			return -1;
 		break;
 	default:
 		errno = ENOTSUP;
@@ -1547,6 +1551,19 @@ void nfct_filter_dump_set_attr(struct nfct_filter_dump *filter_dump,
 void nfct_filter_dump_set_attr_u8(struct nfct_filter_dump *filter_dump,
 				  const enum nfct_filter_dump_attr type,
 				  uint8_t value)
+{
+	nfct_filter_dump_set_attr(filter_dump, type, &value);
+}
+
+/**
+ * nfct_filter_dump_attr_set_u16 - set u16 dump filter attribute
+ * \param filter dump filter object that we want to modify
+ * \param type filter attribute type
+ * \param value value of the filter attribute using unsigned int (32 bits).
+ */
+void nfct_filter_dump_set_attr_u16(struct nfct_filter_dump *filter_dump,
+				  const enum nfct_filter_dump_attr type,
+				  uint16_t value)
 {
 	nfct_filter_dump_set_attr(filter_dump, type, &value);
 }
